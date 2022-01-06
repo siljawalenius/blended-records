@@ -1,0 +1,36 @@
+{
+    "header":{
+        "title":"Blended Records"
+    },
+    "albums":[
+        {
+            "eyebrow": "SUP006",
+            "artist": "Pharmacy Sayings",
+            "title": "A Picture Of A Stranger",
+            "links":{
+                "vinyl": "www.google.ca",
+                "download": "www.google.ca"
+            }
+        },
+        {
+            "eyebrow": "SUP005",
+            "artist": "Various Artists",
+            "title": "Songs of Love and Death",
+            "links":{
+                "vinyl": "www.google.ca",
+                "cd": "www.google.ca",
+                "download": "www.google.ca"
+            }
+        },
+        {
+            "eyebrow": "SUP004",
+            "artist": "Favorite Hunks",
+            "title": "Sound of Daylight",
+            "links":{
+            }
+        }
+    ]
+    
+
+
+}

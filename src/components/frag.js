@@ -1,73 +1,42 @@
-import { ReactComponent as Logo } from "./assets/hi-records-logo.svg";
-import { Canvas, extend } from "@react-three/fiber";
-import { shaderMaterial } from "@react-three/drei";
-import glsl from "babel-plugin-glsl/macro";
+const frag = `
+#ifdef GL_ES
+precision highp float;
+#endif
 
-import Album from "./components/album";
-import "./App.scss";
-import copy from "./data/en.json";
+#define MAX 3
 
-const ALBUMS = copy.albums;
-
-const RecordShaderMaterial = shaderMaterial(
-  //Uniform - info from JS into shader (time, mouse, etc)
-  {},
-  //Vertex - actual object to render
-  glsl`
-  uniform float u_time;
-  uniform vec2 u_resolution;
-  uniform vec2 u_mouse;
-  uniform mat4 u_mvp;
-
-  attribute vec4 a_position;
-  attribute vec2 a_texcoord;
-
-  varying vec2 v_texcoord;
-
-    void main(){
-        gl_Position = u_mvp * a_position;
-        v_texcoord  = a_texcoord;
-    }
-  `,
-
-  //Frag - how to blend the object
-  glsl`
-  #ifdef GL_ES
-    precision highp float;
-  #endif  
-  #define MAX 3
-
-  uniform float u_time;
-  uniform vec2 u_resolution;
-  uniform vec2 u_mouse;
-
-  uniform float scroll;
-
-  uniform sampler2D texture0;
-  uniform sampler2D texture1;
-  uniform sampler2D texture2;
-  uniform sampler2D texture3;
-  uniform sampler2D prevFrame;
-  uniform sampler2D prevPass;
-
-  varying vec2 v_texcoord;
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 u_mouse;
 
 
-  float rand(vec2 n) { 
+uniform float scroll;
+
+uniform sampler2D texture0;
+uniform sampler2D texture1;
+uniform sampler2D texture2;
+uniform sampler2D texture3;
+uniform sampler2D prevFrame;
+uniform sampler2D prevPass;
+
+varying vec3 v_normal;
+varying vec2 v_texcoord;
+
+float rand(vec2 n) { 
     return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758.5453);
-  }
+}
 
-  vec4 sampleColor( vec4 colors[MAX], int index ){
+vec4 sampleColor( vec4 colors[MAX], int index ){
     for( int i = 0; i < MAX; i++){
         if( index == i) {
             return colors[i];
         }
     }
     return colors[MAX-1];
-  }
+}
 
-  void main(){
-
+void main(void)
+{
     vec2 uv = -1.0 + 2.0 *  v_texcoord;
     
     vec4 bg         = vec4(0.0, 0.0, 0.0, 1.0);
@@ -75,7 +44,7 @@ const RecordShaderMaterial = shaderMaterial(
     vec4 innerColors[MAX];
     vec4 midColors[MAX];
     vec4 outerColors[MAX];
-
+    
     innerColors[0] = vec4(0.977, 0.989, 0.641, 1.0);
     innerColors[1] = vec4(0.773, 0.711, 1.000, 1.0);
     innerColors[2] = vec4(0.963, 0.649, 0.646, 1.0);
@@ -87,7 +56,7 @@ const RecordShaderMaterial = shaderMaterial(
     outerColors[0] = vec4(1.000, 0.245, 0.226, 1.0);
     outerColors[1] = vec4(0.071, 0.557, 0.300, 1.0); 
     outerColors[2] = vec4(0.000, 0.206, 0.758, 1.0);
-
+     
     int lowerIndex = int(floor(scroll));
     int upperIndex = int(ceil(scroll));
      
@@ -95,10 +64,11 @@ const RecordShaderMaterial = shaderMaterial(
     
     mixer          = smoothstep(0.3, 0.7, mixer);
     
+    
     vec4 innerColor = mix(
-      sampleColor(innerColors, lowerIndex), 
-      sampleColor(innerColors, upperIndex), 
-      mixer
+        sampleColor(innerColors, lowerIndex), 
+        sampleColor(innerColors, upperIndex), 
+        mixer
     );
     vec4 midColor = mix(
         sampleColor(midColors, lowerIndex), 
@@ -110,11 +80,11 @@ const RecordShaderMaterial = shaderMaterial(
         sampleColor(outerColors, upperIndex), 
         mixer
     );
-
+    
     vec2 innerPoint = vec2(0.0, 0.0) + 0.4 * vec2(cos(u_time), sin(u_time));
     vec2 midPoint = innerPoint + 0.3 * vec2(cos(u_time), sin(u_time));
     vec2 outerPoint = vec2(0.0, 0.0);
-
+    
     float innerDist = distance(uv, innerPoint); 
     float midDist   = distance(uv, midPoint);
     float outerDist = distance(uv, outerPoint);
@@ -133,49 +103,10 @@ const RecordShaderMaterial = shaderMaterial(
     float mixDisk   = smoothstep(0.0, 0.2, disk) - smoothstep(0.5, 0.7, disk);
     
     color           = mix(bg, color, mixDisk);
-
+    
+    
     gl_FragColor    = color;
-  }
-  `
-);
-
-//makes material part of
-extend({ RecordShaderMaterial });
-
-const Scene = () => {
-  return (
-    <Canvas>
-      <pointLight position={[10, 10, 10]} />
-      <mesh>
-        <planeBufferGeometry args={[5, 5]} />
-        <recordShaderMaterial />
-      </mesh>
-    </Canvas>
-  );
-};
-
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <Logo />
-      </header>
-
-      <main>
-        <div className="canvas-holder">
-          <Scene />
-        </div>
-
-        <div className="info">
-          <div className="albums">
-            {ALBUMS.map((album) => (
-              <Album {...album} key={album.eyebrow} />
-            ))}
-          </div>
-        </div>
-      </main>
-    </div>
-  );
 }
+`
 
-export default App;
+export default frag
